@@ -13,7 +13,8 @@
 \gifceKeywords{WPS; PyWPS; Docker; container; thread}
 \gifceAuthors % {name}{affilation}{author ID (ORCID, Scopus, WoS)}{separator}
 {
-  \gifceAuthor{Adam Laža}{{a}}{}{}
+  \gifceAuthor{Ing. Adam Laža}{{a}}{}{}\\
+  \gifceAuthor{Ing. Martin Landa, Ph.D.}{{a}}{}{}
 }
 % --- end of metadata section ---
 
@@ -41,7 +42,6 @@
 \gifceResetAuthor
 %
 \addbibresource{gifce.bib}
-\addbibresource{gifce-example.bib}
 %
 %
 \begin{document} %----------------------------------------------------------
@@ -60,6 +60,7 @@
   \gifcejournalAuthors
 
   \gifceAffiliation{a}\emph{%
+  GeoForAll Lab,
   Department of Geomatics,
   Czech Technical University in Prague, Czech Republic}\\
 \fi
@@ -69,6 +70,8 @@
 \begin{abstract}
 In order to process data independently of the type of
 acquisition, format or platform, international standard interfaces and standardized
+%% ML: nechybi v te druhe vete sloveso?
+%% AL: neprijde mi. "Rozhrani a standard. frameworky jsou nezbytne."
 frameworks are necessary. The Open Geospatial Consortium, Inc. (OGC) - an
 organization oriented toward open geospatial standards - researches and establishes
 technical standards for data compatibility and interoperability.
@@ -77,7 +80,8 @@ standard. The WPS standard defines an interface that facilitates the publishing 
 geospatial processes. There
 are several implementations of WPS standard. This article is focused on
 the PyWPS - a WPS implementation written in Python - and its process isolation via Docker
-technology.
+technology. This Docker extension was developed during work on Master thesis that was 
+defended in February 2018.
 \end{abstract}
 %
 % keywords are added automatically from metadata
@@ -107,7 +111,7 @@ technology.
 
 The OGC Web Processing Service (WPS) Interface Standard defines a standardized interface
 that facilitates the publishing of geospatial processes. Also provides rules how to standardize
-requests and responses for geospatial processing services. 
+requests and responses for geospatial processing services \cite{WPS_standart_1.0}. 
 
 \textit{Process} means any operation on spatial
 data from simple ones like maps overlay or buffering to highly complex as complicated global models. Any kind of GIS 
@@ -177,12 +181,15 @@ request is received and the maximal amount is exceeded, the request is
 rejected and user is informed in response (see
 Lst. \ref{lst:Isolation_rejected}).
 
+%% ML: vyresit preteceni textu
+%% AL: vyreseno
 \begin{lstlisting}[basicstyle=\small,caption={Resource exceeded exception},label={lst:Isolation_rejected}]
 <?xml version="1.0" encoding="UTF-8"?>
-<ows:ExceptionReport xmlns:ows="http://www.opengis.net/ows/1.1" version="1.0.0">
+<ows:ExceptionReport xmlns:ows="http://www.opengis.net/ows/1.1">
     <ows:Exception exceptionCode="ServerBusy">
         <ows:ExceptionText>
-            Maximum number of parallel running processes reached. Please try later.
+            Maximum number of parallel running processes reached. 
+            Please try later.
         </ows:ExceptionText>
     </ows:Exception>
 </ows:ExceptionReport>
@@ -193,7 +200,7 @@ are stored into a local database. This database is used for logging
 and saving waiting Execute requests in the queue and invoking them
 later on. The database will also enable the implementation of
 pausing, releasing and deleting running process. These features will
-allow PyWPS to comply with WPS version 2.0.0.
+allow PyWPS to comply with WPS version 2.0.0 \cite{WPS_standart_2.0}.
 
 \subsection{Current state}
 Current version of PyWPS offers two solutions for running parallel processes: \textit{Multiprocessing}
@@ -212,7 +219,9 @@ Process1 must support status update otherwise it cannot be run in asynchronous m
 \begin{figure}[h!]
 \centering
 \includegraphics[width=0.5\textwidth]{img/Diag_multiprocessing.png}
-\caption{Sequence diagram: Multiprocessing}
+%% ML: source: author
+%% AL: pridano
+\caption{Sequence diagram: Multiprocessing, source: author}
 \label{fig:Diag_multiprocessing}
 \end{figure}
 
@@ -233,7 +242,7 @@ footprint. In case of PyWPS asynchronous requests, for every execution its own p
 \paragraph{Job Scheduler Extension}
 PyWPS scheduler extension offers possibilities to execute asynchronous processes out of the WPS server machine.
 This extension enables to delegate execution of processes to a scheduler system like \textit{Slurm}, \textit{Grid Engine} 
-and \textit{TORQUE} from Adaptive Computing. These schedular systems are usually located at \textit{High Performance Compute (HPC)}
+and \textit{TORQUE} from Adaptive Computing. These scheduler systems are usually located at \textit{High Performance Compute (HPC)}
 centers.
 
 \subsection{Possible solutions for process isolation}
@@ -309,7 +318,9 @@ Now, what is different regarding containers (Fig. \ref{fig:Docker_container}):
 \begin{figure}[h!]
 \centering
 \includegraphics[width=0.4\textwidth]{img/Docker_container.png}
-\caption{Container architecture}
+% source: ?
+%% AL: pridano
+\caption{Container architecture, source \cite{Docker_docs}}
 \label{fig:Docker_container}
 \end{figure}
 
@@ -338,9 +349,13 @@ But the architecture is not the only one difference:
 Dockerfile is a core file that contains the instruction to be performed when an image is built. It usually consists of commands to install packages, calls to other scripts, setting environmental variables, adding files or setting permissions. In Dockerfile there is also defined what image is to be used as a base image for the build.
 
 \section{Implementation}
+The implementation of the Docker extension was realized during
+the work on a Master thesis \cite{thesis}. The goal was to get
+the extension into the main develop branch of PyWPS project.
+
 \subsection{pywps-demo}
 During the implementation the \textit{pywps-demo}
- running on \textit{Flask} framework was
+running on \textit{Flask} framework was
 used. This demo server instance runs on host machine server at port
 5000 as well as the image built from its Dockerfile is used for every
 container creation. For developing purpose some sections were added to
@@ -350,21 +365,23 @@ routing were made.
 \subsubsection{pywps-demo Dockerfile}
 \textit{pywps-demo} is also available as a Dockerfile and as mentioned
 the image built from this Dockerfile is used for container creation.
-Before the work on this thesis started, the pywps-demo project had
-offered two dockerfiles, both based on \textit{alpine Linux}
+%% ML: nahradit thesis za jine slovo...
+%% AL: nahrazeno
+Before the Docker extension was added, the pywps-demo project had
+offered two dockerfiles, both based on \textit{Alpine Linux}
 distribution. The first one \textit{pywps-flask} was the default
 implementation using only Flask while the second one \textit{nginx}
-implements pywps using Nginx and Green unicorn as WSGI server. During
+implements PyWPS using Nginx and Green unicorn as WSGI server. During
 the implementation only the \textit{pywps-flask} Dockerfile was
 used. However it was necessary to modify the Dockerfile because it did
 not contain \textit{GDAL} library which is required for most of the
-demo processes that \textit{pywps-demo} offers.
-
-During implementaion a new version of Dockerfile with
-support of GDAL was created in collaboration with PyWPS
-developers. There were some issues with \textit{Xerces} libraries
-whose packages are not available for alpine distribution and its
-manual instalation was necessary. 
+demo processes that \textit{pywps-demo} offers. This Dockerfile modification
+was realized in collaboration with PyWPS developers.
+%% ML: Prvni vetu prepis, nedava prilis smysl
+%% AL: upraveno
+%% ML: Posledni vetu vynech, jde zbytecne do detailu
+%% AL: Smazano.
+developers.
 
 \subsection{OWSLib}
 \label{sub:owslib}
@@ -500,6 +517,9 @@ job workdir and temporary files. It prevents from accumulation of running but al
 
 \section{Conclusion}
 
+%% ML: diplomova prace by mela byt v referencich, citovat bys ji mohl
+%% i drive nez v zaveru
+%% ML: zaveru by neuskodilo rozsireni
 This article is based on the master thesis. The goal of the thesis 
 was to find and implement a solution for
 process isolation in \textit{PyWPS}. This functionality was demanded
@@ -508,6 +528,38 @@ each process execution. With every process fully isolated, a higher
 level of security is ensured. Moreover, without the isolation the
 processes have access to a file-system of a hosting OS.
 
+But there are other reasons considered. One of them is a
+performance. Non-isolated processes share the resources of a host
+machine. In case that a client requests an execution of a process that
+is poorly designed, its execution can consume a lot of resources and
+thus it may slow down other process executions running in parallel. In
+the worst-case scenario a process execution can bring down the server.
+
+The reseach in the thesis covered various solutions for the process 
+isolation. The functionality for the isolation was the main criterion, 
+however beside that the selected solution should provide some mechanisms 
+to control the execution of the process. These mechanisms will be 
+necessary for implementation of the WPS 2.0.0 standard.
+
+The \textit{Docker} Container Extension has been on the developers
+wishlist for a long time. The container encapsulates the process
+execution and also offers methods to start, pause, stop or kill the
+container and thus the execution. Moreover using Docker opens
+possibilities of Web Processing Service in a cloud computing
+infrastructure.
+
+The architecture is based on \textit{pywps-demo} project. It offers a
+demo server instance of PyWPS. When a process execution is requested,
+a server creates a Docker container with the demo server instance
+running inside. The request is forwarded into the container. The
+process execution runs inside the container but the container output
+directory is mounted into the server file-system so the results are
+available on the server.
+
+The Docker extension was merged into the main develop branch of PyWPS project.
+The text of the thesis and its source code,
+are available at GitHub repository of this 
+thesis.\footnote{\url{https://github.com/ctu-geoforall-lab-projects/dp-laza-2018/}}
 
 \printbibliography[heading=subbibliography]
 \cleardoublepage
